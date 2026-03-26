@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bizbarmak — Регистрация</title>
+    <style>
+        /* Общие стили для красоты */
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #74ebd5 0%, #9face6 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        /* Карточка формы */
+        .auth-card {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+        }
+
+        .auth-card h2 {
+            margin-bottom: 10px;
+            color: #2d3436;
+            font-size: 28px;
+        }
+
+        .auth-card p {
+            color: #636e72;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        /* Стили полей ввода */
+        .input-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2d3436;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            outline: none;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        .input-group input:focus {
+            border-color: #74ebd5;
+        }
+
+        /* Та самая кнопка */
+        .btn-send {
+            width: 100%;
+            padding: 15px;
+            background: #6c5ce7;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.3s;
+        }
+
+        .btn-send:hover {
+            background: #5b4bc4;
+            transform: translateY(-2px);
+        }
+
+        .btn-send:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+<div class="auth-card">
+    <h2>Bizbarmak</h2>
+    <p>Твой мессенджер для своих</p>
+
+    <form action="/register" method="POST">
+        <div class="input-group">
+            <label for="username">Имя пользователя</label>
+            <input type="text" id="username" name="username" placeholder="Как тебя зовут?" required>
+        </div>
+
+        <div class="input-group">
+            <label for="email">Почта</label>
+            <input type="email" id="email" name="email" placeholder="example@mail.com" required>
+        </div>
+
+        <div class="input-group">
+            <label for="password">Пароль</label>
+            <input type="password" id="password" name="password" placeholder="Придумай пароль" required>
+        </div>
+
+        <button type="submit" class="btn-send">Отправить сообщение</button>
+    </form>
+</div>
+
+</body>
+</html>
