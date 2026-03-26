@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bizbarmak | Admin Console</title>
+    <title>Bizbarmak | Admin v2</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; }
@@ -21,13 +21,8 @@
         .mine { background: #667eea; border-bottom-right-radius: 4px; }
         .others { background: rgba(255,255,255,0.1); border-bottom-left-radius: 4px; }
 
-        /* РАНГИ */
         .rank-badge { font-size: 8px; font-weight: bold; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; margin-left: 8px; color: #000; vertical-align: middle; }
-        
-        /* Золотой Шеф */
         .rank-chef { background: linear-gradient(-45deg, #f6d365, #fda085, #f6d365, #fda085) !important; background-size: 400% 400% !important; animation: grad 3s ease infinite; color: #fff !important; }
-        
-        /* КРАСНЫЙ АДМИН (Переливается) */
         .rank-admin { background: linear-gradient(-45deg, #ff4b2b, #ff416c, #ff4b2b, #ff416c) !important; background-size: 400% 400% !important; animation: grad 2s linear infinite; color: #fff !important; box-shadow: 0 0 10px #ff4b2b; }
 
         @keyframes grad { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
@@ -35,11 +30,13 @@
         .input-area { padding: 20px; display: flex; gap: 10px; background: rgba(15, 12, 41, 0.9); }
         input#msgInput { flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; color: white; outline: none; }
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; backdrop-filter: blur(6px); }
-        .modal-content { background: #1a1a2e; padding: 30px; border-radius: 25px; width: 340px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        .modal-content { background: #1a1a2e; padding: 25px; border-radius: 20px; width: 340px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
         
         /* Кнопки админа */
-        .admin-btn { background: #444; color: white; border: none; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 11px; margin: 3px; width: 45%; }
-        .admin-btn:hover { background: #ff4b2b; }
+        .admin-box { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; margin-top: 15px; }
+        .admin-btn { background: #333; color: white; border: none; padding: 6px; border-radius: 6px; cursor: pointer; font-size: 10px; margin: 2px; width: 30%; }
+        .admin-btn:hover { background: #667eea; }
+        .mute-btn { background: #7c4dff; }
     </style>
 </head>
 <body>
@@ -48,44 +45,51 @@
     <div class="profile-section">
         <img id="myAvatar" class="my-avatar" src="" alt="?">
         <h3 id="myNameDisplay">...</h3>
-        <p id="myBioDisplay" style="font-size: 11px; opacity: 0.6;"></p>
-        <button onclick="toggleModal('settingsModal', true)" style="background:none; border:1px solid #333; color:white; padding:5px; border-radius:5px; cursor:pointer;">⚙ Настройки</button>
+        <p id="myBioDisplay" style="font-size: 10px; opacity: 0.6;"></p>
+        <button onclick="toggleModal('settingsModal', true)" style="font-size:10px; background:none; border:1px solid #333; color:gray; cursor:pointer;">Настройки</button>
     </div>
-    <div id="onlineList" style="padding: 20px; font-size: 11px; color: #667eea; overflow-y: auto;"></div>
+    <div id="onlineList" style="padding: 20px; font-size: 11px; color: #667eea;"></div>
 </div>
 
 <div class="main-chat">
     <div id="chat-window"></div>
     <div class="input-area">
-        <input type="text" id="msgInput" placeholder="Напиши что-нибудь..." autocomplete="off">
-        <button onclick="send()" style="background:#667eea; border:none; padding:15px; border-radius:15px; color:white; cursor:pointer; font-weight:bold;">➤</button>
+        <input type="text" id="msgInput" placeholder="Ваше сообщение..." autocomplete="off">
+        <button onclick="send()" style="background:#667eea; border:none; padding:15px; border-radius:15px; color:white; cursor:pointer;">➤</button>
     </div>
 </div>
 
 <div id="profileModal" class="modal" onclick="toggleModal('profileModal', false)">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <img id="vAvatar" src="" style="width:100px; height:100px; border-radius:50%; border: 3px solid #667eea;">
-        <h2 id="vName"></h2>
-        <div id="vRankBox" style="margin-bottom:10px;"></div>
-        <p id="vBio" style="opacity: 0.7;"></p>
+        <img id="vAvatar" src="" style="width:90px; height:90px; border-radius:50%; border:2px solid #667eea;">
+        <h2 id="vName" style="margin:10px 0;"></h2>
+        <div id="vRankBox"></div>
         
-        <div id="adminPanel" style="display:none; background:rgba(255,255,255,0.05); padding:15px; border-radius:15px; margin-top:15px;">
-            <p style="font-size:10px; color:#ff4b2b; margin-bottom:10px; font-weight:bold;">УПРАВЛЕНИЕ ИГРОКОМ</p>
-            <button class="admin-btn" onclick="giveXP(100)">+100 XP</button>
-            <button class="admin-btn" onclick="giveXP(1500)">Сделать Шефом</button>
-            <button class="admin-btn" onclick="resetXP()" style="background:#ff4b2b; width:94%;">ОБНУЛИТЬ ВСЁ</button>
+        <div id="adminPanel" style="display:none;" class="admin-box">
+            <p style="font-size:10px; color:#ff4b2b; font-weight:bold; margin-bottom:5px;">ПУЛЬТ АДМИНИСТРАТОРА</p>
+            <div style="margin-bottom:5px;">
+                <button class="admin-btn" onclick="giveXP(100)">+100 XP</button>
+                <button class="admin-btn" onclick="giveXP(500)">+500 XP</button>
+                <button class="admin-btn" onclick="setChef()" style="background:#f6d365; color:black;">ШЕФ</button>
+            </div>
+            <div>
+                <button class="admin-btn mute-btn" onclick="mute(1)">Мут 1м</button>
+                <button class="admin-btn mute-btn" onclick="mute(5)">Мут 5м</button>
+                <button class="admin-btn mute-btn" onclick="mute(10)">Мут 10м</button>
+            </div>
+            <button class="admin-btn" onclick="resetXP()" style="background:red; width:94%; margin-top:5px;">ОБНУЛИТЬ XP</button>
         </div>
         
-        <button onclick="toggleModal('profileModal', false)" style="margin-top:15px; background:none; border:none; color:gray; cursor:pointer;">Закрыть</button>
+        <button onclick="toggleModal('profileModal', false)" style="margin-top:15px; opacity:0.5; background:none; border:none; color:white; cursor:pointer;">Закрыть</button>
     </div>
 </div>
 
 <div id="settingsModal" class="modal">
     <div class="modal-content">
-        <h3>Настройки профиля</h3>
+        <h3>Профиль</h3>
         <input type="color" id="colorPicker" style="width:100%; height:40px; margin-bottom:10px;">
-        <textarea id="bioInput" placeholder="Твой статус..." style="width:100%; background:#000; color:white; padding:10px; border-radius:10px; border:1px solid #333;"></textarea>
-        <button onclick="save()" style="width:100%; padding:15px; background:#667eea; color:white; border:none; border-radius:12px; margin-top:10px; font-weight:bold;">Сохранить</button>
+        <textarea id="bioInput" placeholder="Статус..." style="width:100%; background:#000; color:white; padding:10px;"></textarea>
+        <button onclick="save()" style="width:100%; padding:15px; background:#667eea; border:none; border-radius:12px; color:white; margin-top:10px;">Сохранить</button>
         <button onclick="toggleModal('settingsModal', false)" style="background:none; border:none; color:gray; margin-top:10px;">Отмена</button>
     </div>
 </div>
@@ -94,7 +98,7 @@
 <script>
     const socket = io();
     const myName = new URLSearchParams(window.location.search).get('user') || "Гость";
-    let targetForAdmin = "";
+    let targetUser = "";
 
     function getRank(xp) {
         if (xp === -1) return { name: "АДМИН", icon: "⚡", color: "#ff4b2b", class: "rank-admin" };
@@ -131,7 +135,7 @@
         div.innerHTML = `
             <img src="${avatar}" class="chat-avatar" onclick="socket.emit('get info', '${user}')">
             <div class="message ${isMe ? 'mine' : 'others'}">
-                <div style="font-size:10px; color:${color}; margin-bottom:4px; display:flex; align-items:center;">
+                <div style="font-size:9px; color:${color}; margin-bottom:3px;">
                     <b>${user}</b> <span class="rank-badge ${r.class}" style="background:${r.color}">${r.icon} ${r.name}</span>
                 </div>
                 ${text}
@@ -143,21 +147,23 @@
 
     socket.on('user info', user => {
         const r = getRank(user.xp);
-        targetForAdmin = user.username;
+        targetUser = user.username;
         document.getElementById('vName').innerText = user.username;
         document.getElementById('vAvatar').src = user.avatar;
-        document.getElementById('vBio').innerText = user.bio;
-        document.getElementById('vRankBox').innerHTML = `<span class="rank-badge ${r.class}" style="background:${r.color}; padding:5px;">${r.icon} ${r.name}</span> <p style="font-size:10px; margin-top:5px;">XP: ${user.xp}</p>`;
+        document.getElementById('vRankBox').innerHTML = `<span class="rank-badge ${r.class}" style="background:${r.color}; padding:5px;">${r.icon} ${r.name}</span> <p style="font-size:10px;">XP: ${user.xp}</p>`;
         
         const panel = document.getElementById('adminPanel');
         panel.style.display = (myName === "@-ADMIN-@" && user.username !== "@-ADMIN-@") ? "block" : "none";
         toggleModal('profileModal', true);
     });
 
-    function giveXP(amount) { socket.emit('admin set xp', { targetName: targetForAdmin, amount }); toggleModal('profileModal', false); }
-    function resetXP() { socket.emit('admin reset xp', targetForAdmin); toggleModal('profileModal', false); }
+    // АДМИН-ФУНКЦИИ
+    function giveXP(val) { socket.emit('admin add xp', { targetName: targetUser, amount: val }); toggleModal('profileModal', false); }
+    function setChef() { socket.emit('admin set chef', targetUser); toggleModal('profileModal', false); }
+    function mute(mins) { socket.emit('admin mute', { targetName: targetUser, minutes: mins }); toggleModal('profileModal', false); }
+    function resetXP() { socket.emit('admin reset xp', targetUser); toggleModal('profileModal', false); }
 
-    socket.on('update online', list => { document.getElementById('onlineList').innerText = "Онлайн: " + list.join(', '); });
+    socket.on('update online', list => { document.getElementById('onlineList').innerText = "В сети: " + list.join(', '); });
     document.getElementById('msgInput').onkeypress = (e) => { if(e.key==='Enter') send(); };
 </script>
 </body>
