@@ -29,28 +29,55 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 app.post('/register', (req, res) => {
     const { username, password } = req.body;
-    if (users.find(u => u.username === username)) return res.send(uiWrapper("Ошибка", "Никнейм уже занят.", "Назад", "#ff4b2b"));
-    
-    users.push({ 
-        username, 
-        password, 
-        color: "#667eea", 
-        bio: "Пользуюсь Bizbarmak 🚀",
-        avatar: "https://cdn-icons-png.flaticon.com/512/147/147144.png"
-    });
-    res.send(uiWrapper("Успех!", `Аккаунт ${username} готов к работе.`, "Войти"));
+    if (users.find(u => u.username === username)) return res.send(uiWrapper("Ошибка", "Никнейм занят.", "Назад", "#ff4b2b"));
+    users.push({ username, password, color: "#667eea", bio: "В сети Bizbarmak", avatar: "https://cdn-icons-png.flaticon.com/512/147/147144.png" });
+    res.send(uiWrapper("Успех!", `Аккаунт ${username} создан.`, "Войти"));
 });
 
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
     const user = users.find(u => u.username === username && u.password === password);
-    if (user) {
-        res.redirect(`/chat.html?user=${encodeURIComponent(username)}`);
-    } else {
-        res.send(uiWrapper("Ошибка входа", "Неверный ник или пароль.", "Назад", "#ff4b2b"));
-    }
+    if (user) res.redirect(`/chat.html?user=${encodeURIComponent(username)}`);
+    else res.send(uiWrapper("Ошибка", "Неверный логин или пароль.", "Назад", "#ff4b2b"));
 });
 
 io.on('connection', (socket) => {
     socket.on('register online', (username) => {
-        onlineUsers[username
+        onlineUsers[username] = socket.id;
+        const user = users.find(u => u.username === username);
+        if (user) socket.emit('profile data', user);
+        io.emit('update online', Object.keys(onlineUsers));
+    });
+
+    socket.on('update profile', (data) => {
+        const user = users.find(u => u.username === data.username);
+        if (user) { user.color = data.color; user.bio = data.bio; user.avatar = data.avatar; }
+    });
+
+    socket.on('chat message', (data) => {
+        const user = users.find(u => u.username === data.user);
+        io.emit('chat message', { ...data, color: user ? user.color : "#ffffff", avatar: user ? user.avatar : "" });
+    });
+
+    socket.on('private message', ({ to, from, text }) => {
+        const targetId = onlineUsers[to];
+        const sender = users.find(u => u.username === from);
+        if (targetId) {
+            const payload = { from, text, color: sender ? sender.color : "#fff", avatar: sender ? sender.avatar : "" };
+            io.to(targetId).emit('private message', payload);
+            socket.emit('private message', { ...payload, from: `Вы (для ${to})` });
+        }
+    });
+
+    socket.on('get info', (name) => {
+        const target = users.find(u => u.username === name);
+        if (target) socket.emit('user info', target);
+    });
+
+    socket.on('disconnect', () => {
+        for (let u in onlineUsers) { if (onlineUsers[u] === socket.id) { delete onlineUsers[u]; break; } }
+        io.emit('update online', Object.keys(onlineUsers));
+    });
+});
+
+server.listen(PORT, () => console.log('Server is running'));
