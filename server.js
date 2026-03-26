@@ -29,37 +29,36 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 app.post('/register', (req, res) => {
     const { username, password } = req.body;
-    if (username === "@-ADMIN-@") return res.send(uiWrapper("Ошибка", "Этот ник зарезервирован.", "Назад", "#ff4b2b"));
+    if (username.includes("ADMIN")) return res.send(uiWrapper("Ошибка", "Этот ник защищен системой.", "Назад", "#ff4b2b"));
     if (users.find(u => u.username === username)) return res.send(uiWrapper("Ошибка", "Никнейм занят.", "Назад", "#ff4b2b"));
     users.push({ 
         username, password, color: "#667eea", 
         bio: "В сети Bizbarmak", 
         avatar: "https://cdn-icons-png.flaticon.com/512/147/147144.png",
-        xp: 0,
-        role: "user"
+        xp: 0 
     });
     res.send(uiWrapper("Успех!", `Аккаунт ${username} создан.`, "Войти"));
 });
 
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
-    
-    // ПРОВЕРКА АДМИН-ПАНЕЛИ
     if (username === "@-ADMIN-@" && password === "adminpanelactivate") {
-        return res.redirect(`/chat.html?user=${encodeURIComponent(username)}&admin=true`);
+        return res.redirect(`/chat.html?user=${encodeURIComponent(username)}`);
     }
-
     const user = users.find(u => u.username === username && u.password === password);
     if (user) res.redirect(`/chat.html?user=${encodeURIComponent(username)}`);
     else res.send(uiWrapper("Ошибка", "Неверный логин или пароль.", "Назад", "#ff4b2b"));
 });
 
 io.on('connection', (socket) => {
+    let currentUserName = "";
+
     socket.on('register online', (username) => {
+        currentUserName = username;
         onlineUsers[username] = socket.id;
         let user;
         if (username === "@-ADMIN-@") {
-            user = { username: "@-ADMIN-@", color: "#ff4b2b", bio: "ГЛАВНЫЙ ШЕФ", avatar: "https://cdn-icons-png.flaticon.com/512/606/606541.png", xp: 999999, role: "admin" };
+            user = { username: "@-ADMIN-@", color: "#ff4b2b", bio: "ГЛАВНЫЙ АДМИНИСТРАТОР", avatar: "https://cdn-icons-png.flaticon.com/512/606/606541.png", xp: -1 };
         } else {
             user = users.find(u => u.username === username);
         }
@@ -68,29 +67,43 @@ io.on('connection', (socket) => {
     });
 
     socket.on('chat message', (data) => {
-        const user = (data.user === "@-ADMIN-@") ? { color: "#ff4b2b", avatar: "https://cdn-icons-png.flaticon.com/512/606/606541.png", xp: 999999 } : users.find(u => u.username === data.user);
+        const isAdmin = data.user === "@-ADMIN-@";
+        const user = isAdmin ? { color: "#ff4b2b", avatar: "https://cdn-icons-png.flaticon.com/512/606/606541.png", xp: -1 } : users.find(u => u.username === data.user);
         if (user) {
-            if (data.user !== "@-ADMIN-@") user.xp += 10;
+            if (!isAdmin) user.xp += 10;
             io.emit('chat message', { ...data, color: user.color, avatar: user.avatar, xp: user.xp });
         }
     });
 
-    // АДМИН-КОМАНДА: Обнулить XP
-    socket.on('admin reset xp', (targetName) => {
-        const admin = Object.keys(onlineUsers).find(key => onlineUsers[key] === socket.id);
-        if (admin === "@-ADMIN-@") {
-            const target = users.find(u => u.username === targetName);
+    socket.on('admin set xp', (data) => {
+        if (currentUserName === "@-ADMIN-@") {
+            const target = users.find(u => u.username === data.targetName);
             if (target) {
-                target.xp = 0;
-                io.emit('chat message', { user: "Система", text: `XP пользователя ${targetName} было обнулено админом!`, color: "#ff4b2b" });
+                target.xp = parseInt(data.amount);
+                io.emit('chat message', { user: "Система", text: `XP игрока ${data.targetName} изменено на ${data.amount}!`, color: "#ff4b2b", avatar: "https://cdn-icons-png.flaticon.com/512/606/606541.png", xp: -2 });
             }
         }
     });
 
+    socket.on('admin reset xp', (targetName) => {
+        if (currentUserName === "@-ADMIN-@") {
+            const target = users.find(u => u.username === targetName);
+            if (target) {
+                target.xp = 0;
+                io.emit('chat message', { user: "Система", text: `Опыт игрока ${targetName} был полностью обнулен!`, color: "#ff4b2b", avatar: "https://cdn-icons-png.flaticon.com/512/606/606541.png", xp: -2 });
+            }
+        }
+    });
+
+    socket.on('get info', (name) => {
+        const target = (name === "@-ADMIN-@") ? { username: "@-ADMIN-@", color: "#ff4b2b", bio: "ГЛАВНЫЙ АДМИНИСТРАТОР", avatar: "https://cdn-icons-png.flaticon.com/512/606/606541.png", xp: -1 } : users.find(u => u.username === name);
+        if (target) socket.emit('user info', target);
+    });
+
     socket.on('disconnect', () => {
-        for (let u in onlineUsers) { if (onlineUsers[u] === socket.id) { delete onlineUsers[u]; break; } }
+        if (currentUserName) delete onlineUsers[currentUserName];
         io.emit('update online', Object.keys(onlineUsers));
     });
 });
 
-server.listen(PORT, () => console.log('Bizbarmak Admin System Active'));
+server.listen(PORT, () => console.log('Bizbarmak Admin Ready!'));
