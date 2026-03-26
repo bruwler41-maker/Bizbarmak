@@ -173,6 +173,15 @@
 
     socket.on('update online', list => { document.getElementById('onlineList').innerText = "В сети: " + list.join(', '); });
     document.getElementById('msgInput').onkeypress = (e) => { if(e.key==='Enter') send(); };
+    function toggleStickers() {
+        const panel = document.getElementById('stickerPanel');
+        panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'grid' : 'none';
+    }
+
+    function sendSticker(url) {
+        socket.emit('chat message', { user: myName, text: url, type: 'sticker' });
+        document.getElementById('stickerPanel').style.display = 'none';
+    }
 </script>
 </body>
 </html>
