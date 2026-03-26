@@ -53,7 +53,15 @@
 
 <div class="main-chat">
     <div id="chat-window"></div>
-    <div class="input-area">
+   <div class="input-area" style="position: relative;">
+        <div id="stickerPanel" style="display:none; position:absolute; bottom:80px; left:20px; background:#1a1a2e; border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:15px; display:grid; grid-template-columns:repeat(4,1fr); gap:10px; z-index:100; backdrop-filter:blur(10px);">
+            <img src="https://cdn-icons-png.flaticon.com/512/2274/2274543.png" style="width:45px; cursor:pointer;" onclick="sendSticker(this.src)">
+            <img src="https://cdn-icons-png.flaticon.com/512/2274/2274555.png" style="width:45px; cursor:pointer;" onclick="sendSticker(this.src)">
+            <img src="https://cdn-icons-png.flaticon.com/512/2274/2274550.png" style="width:45px; cursor:pointer;" onclick="sendSticker(this.src)">
+            <img src="https://cdn-icons-png.flaticon.com/512/2584/2584606.png" style="width:45px; cursor:pointer;" onclick="sendSticker(this.src)">
+        </div>
+
+        <button onclick="toggleStickers()" style="background:none; border:none; font-size:20px; cursor:pointer; padding:0 10px;">😊</button>
         <input type="text" id="msgInput" placeholder="Ваше сообщение..." autocomplete="off">
         <button onclick="send()" style="background:#667eea; border:none; padding:15px; border-radius:15px; color:white; cursor:pointer;">➤</button>
     </div>
