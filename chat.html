@@ -53,20 +53,36 @@
     <button onclick="sendMessage()">Отправить</button>
 </div>
 
+<script src="/socket.io/socket.io.js"></script>
 <script>
-    // Пока что простая логика добавления сообщения на экран
+    const socket = io();
+    const chatWindow = document.getElementById('chat-window');
+    const input = document.getElementById('msgInput');
+
+    // Спрашиваем имя (в идеале передавать из логина, но пока так для теста)
+    const myName = prompt("Введите ваш ник для чата:") || "Аноним";
+
     function sendMessage() {
-        const input = document.getElementById('msgInput');
-        const chatWindow = document.getElementById('chat-window');
-        
         if (input.value.trim() !== "") {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'message mine';
-            msgDiv.innerHTML = `<span class="user-name">Ты</span>${input.value}`;
-            chatWindow.appendChild(msgDiv);
-            
+            // Отправляем на сервер ник и текст
+            socket.emit('chat message', { user: myName, text: input.value });
             input.value = "";
-            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+    }
+
+    // Слушаем сообщения от сервера
+    socket.on('chat message', (data) => {
+        const msgDiv = document.createElement('div');
+        // Если имя совпадает с твоим — сообщение справа, если нет — слева
+        msgDiv.className = data.user === myName ? 'message mine' : 'message others';
+        
+        msgDiv.innerHTML = `<span class="user-name">${data.user}</span>${data.text}`;
+        chatWindow.appendChild(msgDiv);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    });
+
+    input.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+</script>
         }
     }
 
