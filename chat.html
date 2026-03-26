@@ -8,114 +8,184 @@
     <style>
         * { box-sizing: border-box; }
         body { font-family: 'Poppins', sans-serif; background: #0f0c29; margin: 0; display: flex; height: 100vh; color: white; overflow: hidden; }
+        
+        /* Sidebar */
         .sidebar { width: 280px; background: rgba(255,255,255,0.03); border-right: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; }
         .profile-section { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: center; }
-        .avatar { width: 70px; height: 70px; background: #667eea; border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; }
-        .settings-btn { background: none; border: 1px solid rgba(255,255,255,0.2); color: white; padding: 6px 12px; border-radius: 8px; font-size: 12px; cursor: pointer; margin-top: 10px; }
-        .search-box { padding: 15px; }
-        .search-box input { width: 100%; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 10px; color: white; outline: none; }
-        .main-chat { flex: 1; display: flex; flex-direction: column; }
-        #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
-        .message { max-width: 75%; padding: 12px 16px; border-radius: 18px; font-size: 14px; position: relative; }
-        .mine { align-self: flex-end; background: #667eea; border-bottom-right-radius: 4px; }
-        .others { align-self: flex-start; background: rgba(255,255,255,0.1); border-bottom-left-radius: 4px; }
-        .private { border: 1px solid #ffde59; background: rgba(255, 222, 89, 0.1) !important; }
-        .input-area { padding: 20px; display: flex; gap: 10px; background: rgba(255,255,255,0.02); }
-        input#msgInput { flex: 1; background: rgba(255,255,255,0.1); border: none; padding: 15px; border-radius: 15px; color: white; outline: none; }
-        button#sendBtn { background: #667eea; border: none; width: 50px; height: 50px; border-radius: 50%; color: white; cursor: pointer; }
-        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-        .modal-content { background: #1a1a2e; padding: 30px; border-radius: 24px; width: 320px; border: 1px solid rgba(255,255,255,0.1); }
-        .modal-content input, .modal-content textarea { width: 100%; background: #0f0c29; border: 1px solid #333; color: white; padding: 12px; margin: 10px 0; border-radius: 10px; }
+        .my-avatar { width: 80px; height: 80px; border-radius: 50%; border: 2px solid #667eea; object-fit: cover; margin-bottom: 10px; }
+        .settings-btn { background: none; border: 1px solid rgba(255,255,255,0.2); color: white; padding: 6px 15px; border-radius: 8px; cursor: pointer; font-size: 12px; }
+        
+        /* Chat Area */
+        .main-chat { flex: 1; display: flex; flex-direction: column; background: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-blend-mode: overlay; background-color: #0f0c29; }
+        #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        
+        .msg-container { display: flex; align-items: flex-end; gap: 10px; max-width: 85%; }
+        .mine-container { flex-direction: row-reverse; align-self: flex-end; }
+        .others-container { align-self: flex-start; }
+        
+        .chat-avatar { width: 38px; height: 38px; border-radius: 50%; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1); }
+        .chat-avatar:hover { transform: scale(1.1); }
+        
+        .message { padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.4; position: relative; }
+        .mine { background: #667eea; border-bottom-right-radius: 4px; box-shadow: 0 4px 10px rgba(102,126,234,0.3); }
+        .others { background: rgba(255,255,255,0.1); border-bottom-left-radius: 4px; backdrop-filter: blur(5px); }
+        .private { border: 1px solid #ffde59; background: rgba(255, 222, 89, 0.15) !important; }
+
+        /* Input */
+        .input-area { padding: 20px; display: flex; gap: 10px; background: rgba(15, 12, 41, 0.9); }
+        input#msgInput { flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; color: white; outline: none; }
+        
+        /* Modals */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; backdrop-filter: blur(6px); }
+        .modal-content { background: #1a1a2e; padding: 30px; border-radius: 25px; width: 340px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        .avatar-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0; }
+        .avatar-opt { width: 65px; height: 65px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: 0.2s; }
+        .avatar-opt.active { border-color: #667eea; transform: scale(1.1); }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
     <div class="profile-section">
-        <div class="avatar" id="myAvatar">?</div>
-        <h3 id="myTitle">...</h3>
-        <p id="myBio" style="font-size: 11px; opacity: 0.6; margin: 0;">Загрузка...</p>
-        <button class="settings-btn" onclick="openSettings()">⚙ Настройки</button>
+        <img id="myAvatar" class="my-avatar" src="" alt="?">
+        <h3 id="myNameDisplay">...</h3>
+        <p id="myBioDisplay" style="font-size: 11px; opacity: 0.5; margin: 0 0 10px;">Загрузка...</p>
+        <button class="settings-btn" onclick="toggleModal('settingsModal', true)">⚙ Настройки</button>
     </div>
-    <div class="search-box"><input type="text" id="targetUser" placeholder="Кому (Ник)..."></div>
-    <div id="onlineList" style="padding: 15px; font-size: 12px; opacity: 0.5;"></div>
+    <div style="padding: 20px;">
+        <p style="font-size: 10px; opacity: 0.4; margin-bottom: 5px;">Если пусто — общий чат</p>
+        <input type="text" id="targetUser" placeholder="Кому (Ник)..." style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px; color: white;">
+    </div>
+    <div id="onlineList" style="padding: 0 20px; font-size: 11px; color: #667eea;"></div>
 </div>
 
 <div class="main-chat">
     <div id="chat-window"></div>
     <div class="input-area">
-        <input type="text" id="msgInput" placeholder="Напиши..." autocomplete="off">
-        <button id="sendBtn" onclick="sendMessage()">➤</button>
+        <input type="text" id="msgInput" placeholder="Напиши что-нибудь..." autocomplete="off">
+        <button onclick="send()" style="background:#667eea; border:none; padding:15px 25px; border-radius:15px; color:white; font-weight:bold; cursor:pointer;">➤</button>
     </div>
 </div>
 
 <div id="settingsModal" class="modal">
     <div class="modal-content">
-        <h3>Профиль</h3>
-        <label>Цвет имени:</label><input type="color" id="colorPicker" value="#667eea">
-        <label>Статус:</label><textarea id="bioInput" rows="2"></textarea>
-        <button onclick="saveSettings()" style="width:100%; padding:12px; background:#667eea; border:none; border-radius:10px; color:white; font-weight:bold; cursor:pointer;">Сохранить</button>
-        <button onclick="closeSettings()" style="width:100%; padding:10px; background:transparent; border:none; color:rgba(255,255,255,0.5); cursor:pointer;">Закрыть</button>
+        <h3>Мой профиль</h3>
+        <div class="avatar-grid" id="avatarPicker"></div>
+        <input type="color" id="colorPicker" style="width:100%; height:40px; border:none; background:none; cursor:pointer;">
+        <textarea id="bioInput" rows="2" placeholder="Твой статус..." style="width:100%; margin-top:15px; background:#0f0c29; border:1px solid #333; color:white; padding:10px; border-radius:10px;"></textarea>
+        <button onclick="save()" style="width:100%; margin-top:20px; padding:15px; background:#667eea; border:none; border-radius:12px; color:white; font-weight:bold; cursor:pointer;">Сохранить</button>
+        <button onclick="toggleModal('settingsModal', false)" style="margin-top:10px; background:none; border:none; color:gray; cursor:pointer;">Закрыть</button>
+    </div>
+</div>
+
+<div id="profileModal" class="modal" onclick="toggleModal('profileModal', false)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <img id="vAvatar" src="" style="width:110px; height:110px; border-radius:50%; border:3px solid #667eea;">
+        <h2 id="vName" style="margin:10px 0 5px;"></h2>
+        <p id="vBio" style="opacity:0.6; font-size:14px;"></p>
+        <button onclick="toggleModal('profileModal', false)" style="margin-top:20px; padding:10px 25px; background:rgba(255,255,255,0.1); border:none; border-radius:10px; color:white; cursor:pointer;">Закрыть</button>
     </div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
     const socket = io();
-    const urlParams = new URLSearchParams(window.location.search);
-    const myName = urlParams.get('user') || "Аноним";
-    document.getElementById('myTitle').innerText = myName;
-    document.getElementById('myAvatar').innerText = myName[0].toUpperCase();
+    const myName = new URLSearchParams(window.location.search).get('user') || "Гость";
+    let selectedAvatar = "";
+
+    const avatarList = [
+        "https://cdn-icons-png.flaticon.com/512/4140/4140037.png",
+        "https://cdn-icons-png.flaticon.com/512/4140/4140048.png",
+        "https://cdn-icons-png.flaticon.com/512/4140/4140047.png",
+        "https://cdn-icons-png.flaticon.com/512/1154/1154473.png",
+        "https://cdn-icons-png.flaticon.com/512/147/147142.png",
+        "https://cdn-icons-png.flaticon.com/512/1154/1154446.png"
+    ];
+
+    // Инициализация аватарок в настройках
+    const picker = document.getElementById('avatarPicker');
+    avatarList.forEach(url => {
+        const img = document.createElement('img');
+        img.src = url; img.className = 'avatar-opt';
+        img.onclick = () => {
+            document.querySelectorAll('.avatar-opt').forEach(i => i.classList.remove('active'));
+            img.classList.add('active');
+            selectedAvatar = url;
+        };
+        picker.appendChild(img);
+    });
 
     socket.emit('register online', myName);
 
-    socket.on('profile data', (data) => {
-        if(data) {
-            document.getElementById('myAvatar').style.background = data.color;
-            document.getElementById('colorPicker').value = data.color;
-            document.getElementById('myBio').innerText = data.bio;
-            document.getElementById('bioInput').value = data.bio;
-        }
+    socket.on('profile data', (user) => {
+        document.getElementById('myNameDisplay').innerText = user.username;
+        document.getElementById('myAvatar').src = user.avatar;
+        document.getElementById('myBioDisplay').innerText = user.bio;
+        selectedAvatar = user.avatar;
+        document.getElementById('colorPicker').value = user.color;
+        document.getElementById('bioInput').value = user.bio;
     });
 
-    function openSettings() { document.getElementById('settingsModal').style.display = 'flex'; }
-    function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
-    
-    function saveSettings() {
+    function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
+
+    function save() {
         const color = document.getElementById('colorPicker').value;
         const bio = document.getElementById('bioInput').value;
-        document.getElementById('myAvatar').style.background = color;
-        document.getElementById('myBio').innerText = bio;
-        socket.emit('update profile', { username: myName, color, bio });
-        closeSettings();
+        document.getElementById('myAvatar').src = selectedAvatar;
+        document.getElementById('myBioDisplay').innerText = bio;
+        socket.emit('update profile', { username: myName, color, bio, avatar: selectedAvatar });
+        toggleModal('settingsModal', false);
     }
 
-    function sendMessage() {
+    function send() {
         const text = document.getElementById('msgInput').value.trim();
         const to = document.getElementById('targetUser').value.trim();
         if (!text) return;
-        if (to && to !== myName) { socket.emit('private message', { to, from: myName, text }); } 
-        else { socket.emit('chat message', { user: myName, text }); }
+        if (to && to !== myName) socket.emit('private message', { to, from: myName, text });
+        else socket.emit('chat message', { user: myName, text });
         document.getElementById('msgInput').value = "";
     }
 
-    socket.on('chat message', (data) => addMessage(data.user, data.text, false, false, data.color));
-    socket.on('private message', (data) => addMessage(data.from, data.text, true, false, data.color));
-    socket.on('system message', (text) => addMessage("Система", text, false, true));
-    
-    socket.on('update online', (users) => {
-        document.getElementById('onlineList').innerText = "В сети: " + users.join(', ');
-    });
+    socket.on('chat message', data => add(data.user, data.text, false, data.color, data.avatar));
+    socket.on('private message', data => add(data.from, data.text, true, data.color, data.avatar));
+    socket.on('system message', txt => add("Система", txt, false, "#ff4b2b", ""));
 
-    function addMessage(user, text, isPrivate, isSystem = false, color = "#fff") {
-        const div = document.createElement('div');
-        div.className = `message ${user === myName || user.startsWith('Вы') ? 'mine' : 'others'} ${isPrivate ? 'private' : ''}`;
-        div.innerHTML = `<span style="font-size: 10px; display: block; opacity: 0.8; color: ${color}; font-weight: bold;">${isPrivate ? '[ЛС] ' : ''}${user}</span>${text}`;
-        document.getElementById('chat-window').appendChild(div);
-        document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
+    function add(user, text, priv, color, avatar) {
+        const win = document.getElementById('chat-window');
+        const isMe = user === myName || user.startsWith('Вы');
+        
+        const cont = document.createElement('div');
+        cont.className = `msg-container ${isMe ? 'mine-container' : 'others-container'}`;
+        
+        const img = document.createElement('img');
+        img.className = 'chat-avatar';
+        img.src = avatar || "https://cdn-icons-png.flaticon.com/512/147/147144.png";
+        img.onclick = () => {
+            if (user === "Система") return;
+            socket.emit('get info', user.replace('Вы (для ', '').replace(')', ''));
+        };
+
+        const m = document.createElement('div');
+        m.className = `message ${isMe ? 'mine' : 'others'} ${priv ? 'private' : ''}`;
+        m.innerHTML = `<b style="font-size:10px; color:${color}; display:block;">${user}</b>${text}`;
+        
+        cont.append(img, m);
+        win.appendChild(cont);
+        win.scrollTop = win.scrollHeight;
     }
 
-    document.getElementById('msgInput').addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
+    socket.on('user info', user => {
+        document.getElementById('vName').innerText = user.username;
+        document.getElementById('vAvatar').src = user.avatar;
+        document.getElementById('vBio').innerText = user.bio;
+        toggleModal('profileModal', true);
+    });
+
+    socket.on('update online', users => {
+        document.getElementById('onlineList').innerText = "Онлайн: " + users.join(', ');
+    });
+
+    document.getElementById('msgInput').onkeypress = (e) => { if(e.key==='Enter') send(); };
 </script>
 </body>
 </html>
