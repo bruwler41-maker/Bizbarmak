@@ -43,4 +43,166 @@
         }
 
         @keyframes chefGradient {
-            0% {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Input */
+        .input-area { padding: 20px; display: flex; gap: 10px; background: rgba(15, 12, 41, 0.9); }
+        input#msgInput { flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; color: white; outline: none; }
+        
+        /* Modals */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; backdrop-filter: blur(6px); }
+        .modal-content { background: #1a1a2e; padding: 30px; border-radius: 25px; width: 340px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        .avatar-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0; }
+        .avatar-opt { width: 65px; height: 65px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; }
+        .avatar-opt.active { border-color: #667eea; transform: scale(1.1); }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="profile-section">
+        <img id="myAvatar" class="my-avatar" src="" alt="?">
+        <h3 id="myNameDisplay">...</h3>
+        <p id="myBioDisplay" style="font-size: 11px; opacity: 0.5; margin: 0 0 10px;"></p>
+        <button class="settings-btn" onclick="toggleModal('settingsModal', true)">⚙ Настройки</button>
+    </div>
+    <div style="padding: 20px;">
+        <input type="text" id="targetUser" placeholder="Кому (Ник)..." style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px; color: white;">
+    </div>
+    <div id="onlineList" style="padding: 0 20px; font-size: 11px; color: #667eea;"></div>
+</div>
+
+<div class="main-chat">
+    <div id="chat-window"></div>
+    <div class="input-area">
+        <input type="text" id="msgInput" placeholder="Напиши сообщение..." autocomplete="off">
+        <button onclick="send()" style="background:#667eea; border:none; padding:15px 25px; border-radius:15px; color:white; font-weight:bold; cursor:pointer;">➤</button>
+    </div>
+</div>
+
+<div id="settingsModal" class="modal">
+    <div class="modal-content">
+        <h3>Мой профиль</h3>
+        <div class="avatar-grid" id="avatarPicker"></div>
+        <input type="color" id="colorPicker" style="width:100%; height:40px; margin-bottom:10px;">
+        <textarea id="bioInput" rows="2" placeholder="Твой статус..." style="width:100%; background:#0f0c29; border:1px solid #333; color:white; padding:10px; border-radius:10px;"></textarea>
+        <button onclick="save()" style="width:100%; margin-top:20px; padding:15px; background:#667eea; border:none; border-radius:12px; color:white; font-weight:bold; cursor:pointer;">Сохранить</button>
+        <button onclick="toggleModal('settingsModal', false)" style="margin-top:10px; background:none; border:none; color:gray; cursor:pointer;">Закрыть</button>
+    </div>
+</div>
+
+<div id="profileModal" class="modal" onclick="toggleModal('profileModal', false)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <img id="vAvatar" src="" style="width:110px; height:110px; border-radius:50%; border:3px solid #667eea;">
+        <h2 id="vName" style="margin:10px 0 5px;"></h2>
+        <div id="vRankBox" style="margin-bottom:10px;"></div>
+        <p id="vBio" style="opacity:0.6; font-size:14px;"></p>
+        <button onclick="toggleModal('profileModal', false)" style="background:none; border:none; color:gray; cursor:pointer;">Закрыть</button>
+    </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+    const myName = new URLSearchParams(window.location.search).get('user') || "Гость";
+    let selectedAvatar = "";
+
+    const avatarList = [
+        "https://cdn-icons-png.flaticon.com/512/4140/4140037.png", "https://cdn-icons-png.flaticon.com/512/4140/4140048.png",
+        "https://cdn-icons-png.flaticon.com/512/4140/4140047.png", "https://cdn-icons-png.flaticon.com/512/1154/1154473.png",
+        "https://cdn-icons-png.flaticon.com/512/147/147142.png", "https://cdn-icons-png.flaticon.com/512/1154/1154446.png"
+    ];
+
+    const picker = document.getElementById('avatarPicker');
+    avatarList.forEach(url => {
+        const img = document.createElement('img');
+        img.src = url; img.className = 'avatar-opt';
+        img.onclick = () => { document.querySelectorAll('.avatar-opt').forEach(i => i.classList.remove('active')); img.classList.add('active'); selectedAvatar = url; };
+        picker.appendChild(img);
+    });
+
+    function getRank(xp) {
+        if (xp < 100) return { name: "Голодный", icon: "🥖", color: "#aaa", class: "" };
+        if (xp < 500) return { name: "Гость", icon: "🍽️", color: "#4facfe", class: "" };
+        if (xp < 1500) return { name: "Ценитель", icon: "🍷", color: "#f093fb", class: "" };
+        return { name: "Шеф Bizbarmak", icon: "👑", color: "#f6d365", class: "rank-chef" };
+    }
+
+    socket.emit('register online', myName);
+
+    socket.on('profile data', (user) => {
+        const rank = getRank(user.xp);
+        document.getElementById('myNameDisplay').innerText = user.username;
+        document.getElementById('myAvatar').src = user.avatar;
+        document.getElementById('myBioDisplay').innerHTML = `${rank.icon} ${rank.name} | XP: ${user.xp}`;
+        selectedAvatar = user.avatar;
+        document.getElementById('colorPicker').value = user.color;
+        document.getElementById('bioInput').value = user.bio;
+    });
+
+    function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
+
+    function save() {
+        socket.emit('update profile', { username: myName, color: document.getElementById('colorPicker').value, bio: document.getElementById('bioInput').value, avatar: selectedAvatar });
+        toggleModal('settingsModal', false);
+        setTimeout(() => location.reload(), 500);
+    }
+
+    function send() {
+        const text = document.getElementById('msgInput').value.trim();
+        const to = document.getElementById('targetUser').value.trim();
+        if (text) {
+            if (to && to !== myName) socket.emit('private message', { to, from: myName, text });
+            else socket.emit('chat message', { user: myName, text });
+            document.getElementById('msgInput').value = "";
+        }
+    }
+
+    socket.on('chat message', data => add(data.user, data.text, false, data.color, data.avatar, data.xp));
+    socket.on('private message', data => add(data.from, data.text, true, data.color, data.avatar, data.xp));
+
+    function add(user, text, priv, color, avatar, xp = 0) {
+        const win = document.getElementById('chat-window');
+        const isMe = user === myName || user.startsWith('Вы');
+        const rank = getRank(xp);
+        
+        const cont = document.createElement('div');
+        cont.className = `msg-container ${isMe ? 'mine-container' : 'others-container'}`;
+        
+        const img = document.createElement('img');
+        img.className = 'chat-avatar';
+        img.src = avatar || avatarList[0];
+        img.onclick = () => socket.emit('get info', user.replace('Вы (для ', '').replace(')', ''));
+
+        const m = document.createElement('div');
+        m.className = `message ${isMe ? 'mine' : 'others'} ${priv ? 'private' : ''}`;
+        m.innerHTML = `
+            <div style="display:flex; align-items:center; margin-bottom:4px;">
+                <b style="font-size:10px; color:${color};">${user}</b>
+                <span class="rank-badge ${rank.class}" style="background:${rank.color}">${rank.icon} ${rank.name}</span>
+            </div>
+            ${text}
+        `;
+        
+        cont.append(img, m);
+        win.appendChild(cont);
+        win.scrollTop = win.scrollHeight;
+    }
+
+    socket.on('user info', user => {
+        const rank = getRank(user.xp);
+        document.getElementById('vName').innerText = user.username;
+        document.getElementById('vAvatar').src = user.avatar;
+        document.getElementById('vRankBox').innerHTML = `<span class="rank-badge ${rank.class}" style="background:${rank.color}; padding:5px 10px; font-size:10px;">${rank.icon} ${rank.name} (${user.xp} XP)</span>`;
+        document.getElementById('vBio').innerText = user.bio;
+        toggleModal('profileModal', true);
+    });
+
+    socket.on('update online', users => { document.getElementById('onlineList').innerText = "Онлайн: " + users.join(', '); });
+    document.getElementById('msgInput').onkeypress = (e) => { if(e.key==='Enter') send(); };
+</script>
+</body>
+</html>
