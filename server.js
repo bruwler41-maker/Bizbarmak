@@ -30,7 +30,12 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.post('/register', (req, res) => {
     const { username, password } = req.body;
     if (users.find(u => u.username === username)) return res.send(uiWrapper("Ошибка", "Никнейм занят.", "Назад", "#ff4b2b"));
-    users.push({ username, password, color: "#667eea", bio: "В сети Bizbarmak", avatar: "https://cdn-icons-png.flaticon.com/512/147/147144.png" });
+    users.push({ 
+        username, password, color: "#667eea", 
+        bio: "В сети Bizbarmak", 
+        avatar: "https://cdn-icons-png.flaticon.com/512/147/147144.png",
+        xp: 0 
+    });
     res.send(uiWrapper("Успех!", `Аккаунт ${username} создан.`, "Войти"));
 });
 
@@ -56,14 +61,23 @@ io.on('connection', (socket) => {
 
     socket.on('chat message', (data) => {
         const user = users.find(u => u.username === data.user);
-        io.emit('chat message', { ...data, color: user ? user.color : "#ffffff", avatar: user ? user.avatar : "" });
+        if (user) {
+            user.xp += 10; // +10 XP за каждое сообщение
+            io.emit('chat message', { 
+                ...data, 
+                color: user.color, 
+                avatar: user.avatar, 
+                xp: user.xp 
+            });
+        }
     });
 
     socket.on('private message', ({ to, from, text }) => {
         const targetId = onlineUsers[to];
         const sender = users.find(u => u.username === from);
-        if (targetId) {
-            const payload = { from, text, color: sender ? sender.color : "#fff", avatar: sender ? sender.avatar : "" };
+        if (targetId && sender) {
+            sender.xp += 5; // За ЛС даем чуть меньше XP
+            const payload = { from, text, color: sender.color, avatar: sender.avatar, xp: sender.xp };
             io.to(targetId).emit('private message', payload);
             socket.emit('private message', { ...payload, from: `Вы (для ${to})` });
         }
@@ -71,13 +85,4 @@ io.on('connection', (socket) => {
 
     socket.on('get info', (name) => {
         const target = users.find(u => u.username === name);
-        if (target) socket.emit('user info', target);
-    });
-
-    socket.on('disconnect', () => {
-        for (let u in onlineUsers) { if (onlineUsers[u] === socket.id) { delete onlineUsers[u]; break; } }
-        io.emit('update online', Object.keys(onlineUsers));
-    });
-});
-
-server.listen(PORT, () => console.log('Server is running'));
+        if (target
