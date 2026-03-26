@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bizbarmak</title>
+    <title>Bizbarmak | Admin v2</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; }
@@ -53,15 +53,7 @@
 
 <div class="main-chat">
     <div id="chat-window"></div>
-   <div class="input-area" style="position: relative;">
-        <div id="stickerPanel" style="display:none; position:absolute; bottom:80px; left:20px; background:#1a1a2e; border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:15px; display:grid; grid-template-columns:repeat(4,1fr); gap:10px; z-index:100; backdrop-filter:blur(10px);">
-            <img src="https://cdn-icons-png.flaticon.com/512/2274/2274543.png" style="width:45px; cursor:pointer;" onclick="sendSticker(this.src)">
-            <img src="https://cdn-icons-png.flaticon.com/512/2274/2274555.png" style="width:45px; cursor:pointer;" onclick="sendSticker(this.src)">
-            <img src="https://cdn-icons-png.flaticon.com/512/2274/2274550.png" style="width:45px; cursor:pointer;" onclick="sendSticker(this.src)">
-            <img src="https://cdn-icons-png.flaticon.com/512/2584/2584606.png" style="width:45px; cursor:pointer;" onclick="sendSticker(this.src)">
-        </div>
-
-        <button onclick="toggleStickers()" style="background:none; border:none; font-size:20px; cursor:pointer; padding:0 10px;">😊</button>
+    <div class="input-area">
         <input type="text" id="msgInput" placeholder="Ваше сообщение..." autocomplete="off">
         <button onclick="send()" style="background:#667eea; border:none; padding:15px; border-radius:15px; color:white; cursor:pointer;">➤</button>
     </div>
@@ -173,15 +165,6 @@
 
     socket.on('update online', list => { document.getElementById('onlineList').innerText = "В сети: " + list.join(', '); });
     document.getElementById('msgInput').onkeypress = (e) => { if(e.key==='Enter') send(); };
-    function toggleStickers() {
-        const panel = document.getElementById('stickerPanel');
-        panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'grid' : 'none';
-    }
-
-    function sendSticker(url) {
-        socket.emit('chat message', { user: myName, text: url, type: 'sticker' });
-        document.getElementById('stickerPanel').style.display = 'none';
-    }
 </script>
 </body>
 </html>
