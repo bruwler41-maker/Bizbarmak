@@ -5,123 +5,70 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bizbarmak Messenger</title>
     <style>
-        /* Стиль в духе современных мессенджеров */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            color: #333;
+            display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;
         }
-
         .auth-container {
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            width: 100%;
-            max-width: 350px;
-            text-align: center;
+            background: white; padding: 40px; border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 350px; text-align: center;
         }
-
-        h2 {
-            margin-bottom: 20px;
-            color: #4a148c;
-            font-size: 28px;
-            letter-spacing: 1px;
-        }
-
+        h2 { margin-bottom: 20px; color: #4a148c; }
         input {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: 2px solid #eee;
-            border-radius: 10px;
-            box-sizing: border-box;
-            transition: 0.3s;
-            outline: none;
+            width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #eee;
+            border-radius: 10px; box-sizing: border-box; outline: none;
         }
-
-        input:focus {
-            border-color: #764ba2;
-        }
-
-        .captcha-box {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 10px;
-            margin: 10px 0;
-            border: 1px dashed #764ba2;
-            font-weight: bold;
-        }
-
         button {
-            width: 100%;
-            padding: 15px;
-            background: #764ba2;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: 0.3s;
-            margin-top: 10px;
+            width: 100%; padding: 15px; background: #764ba2; color: white;
+            border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold;
         }
-
-        button:hover {
-            background: #5a368a;
-            transform: translateY(-2px);
-        }
-
-        .switch-form {
-            margin-top: 20px;
-            font-size: 14px;
-        }
-
-        .switch-form a {
-            color: #764ba2;
-            text-decoration: none;
-            font-weight: bold;
-        }
+        .hidden { display: none; }
+        .switch-form { margin-top: 20px; font-size: 14px; }
+        .switch-form a { color: #764ba2; text-decoration: none; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="auth-container">
-    <h2>Bizbarmak</h2>
+    <h2 id="formTitle">Вход</h2>
     
-    <form action="/register" method="POST" id="authForm">
+    <form action="/login" method="POST" id="loginForm">
+        <input type="text" name="username" placeholder="Логин" required>
+        <input type="password" name="password" placeholder="Пароль" required>
+        <button type="submit">Войти</button>
+    </form>
+
+    <form action="/register" method="POST" id="registerForm" class="hidden">
         <input type="text" name="username" placeholder="Придумай никнейм" required>
         <input type="password" name="password" placeholder="Придумай пароль" required>
-        
-        <div class="captcha-box" id="captchaText">
-            Защита: Сколько будет 2 + 2?
-        </div>
-        <input type="text" name="captcha" placeholder="Ответ цифрой" required>
-        
         <button type="submit">Создать аккаунт</button>
     </form>
 
-    <div class="switch-form">
-        Уже есть аккаунт? <a href="#" onclick="alert('Вход будет доступен после подключения базы данных!')">Войти</a>
+    <div class="switch-form" id="switchText">
+        Нет аккаунта? <a onclick="toggleForm()">Зарегистрироваться</a>
     </div>
 </div>
 
 <script>
-    // Маленький скрипт, чтобы капча была чуть-чуть разной при перезагрузке
-    const questions = [
-        { q: "Сколько будет 5 + 5?", a: "10" },
-        { q: "Сколько будет 3 + 2?", a: "5" },
-        { q: "Сколько будет 10 - 4?", a: "6" }
-    ];
-    
-    // Можно раскомментировать позже, когда будем усложнять капчу
-    // const randomQ = questions[Math.floor(Math.random() * questions.length)];
-    // document.getElementById('captchaText').innerText = "Защита: " + randomQ.q;
+    function toggleForm() {
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const title = document.getElementById('formTitle');
+        const switchText = document.getElementById('switchText');
+
+        if (loginForm.classList.contains('hidden')) {
+            loginForm.classList.remove('hidden');
+            registerForm.classList.add('hidden');
+            title.innerText = "Вход";
+            switchText.innerHTML = 'Нет аккаунта? <a onclick="toggleForm()">Зарегистрироваться</a>';
+        } else {
+            loginForm.classList.add('hidden');
+            registerForm.classList.remove('hidden');
+            title.innerText = "Регистрация";
+            switchText.innerHTML = 'Уже есть аккаунт? <a onclick="toggleForm()">Войти</a>';
+        }
+    }
 </script>
 
 </body>
