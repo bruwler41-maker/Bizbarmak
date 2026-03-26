@@ -62,13 +62,8 @@ io.on('connection', (socket) => {
     socket.on('chat message', (data) => {
         const user = users.find(u => u.username === data.user);
         if (user) {
-            user.xp += 10; // +10 XP за каждое сообщение
-            io.emit('chat message', { 
-                ...data, 
-                color: user.color, 
-                avatar: user.avatar, 
-                xp: user.xp 
-            });
+            user.xp += 10;
+            io.emit('chat message', { ...data, color: user.color, avatar: user.avatar, xp: user.xp });
         }
     });
 
@@ -76,7 +71,7 @@ io.on('connection', (socket) => {
         const targetId = onlineUsers[to];
         const sender = users.find(u => u.username === from);
         if (targetId && sender) {
-            sender.xp += 5; // За ЛС даем чуть меньше XP
+            sender.xp += 5;
             const payload = { from, text, color: sender.color, avatar: sender.avatar, xp: sender.xp };
             io.to(targetId).emit('private message', payload);
             socket.emit('private message', { ...payload, from: `Вы (для ${to})` });
@@ -85,4 +80,13 @@ io.on('connection', (socket) => {
 
     socket.on('get info', (name) => {
         const target = users.find(u => u.username === name);
-        if (target
+        if (target) socket.emit('user info', target);
+    });
+
+    socket.on('disconnect', () => {
+        for (let u in onlineUsers) { if (onlineUsers[u] === socket.id) { delete onlineUsers[u]; break; } }
+        io.emit('update online', Object.keys(onlineUsers));
+    });
+});
+
+server.listen(PORT, () => console.log('Bizbarmak Live!'));
