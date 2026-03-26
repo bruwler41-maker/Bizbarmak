@@ -10,7 +10,6 @@ const PORT = process.env.PORT || 3000;
 
 let users = []; 
 let onlineUsers = {}; 
-let messages = []; 
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -22,8 +21,8 @@ app.post('/register', (req, res) => {
     const { username, password } = req.body;
     if (username.includes("ADMIN")) return res.send("Ник защищен.");
     if (users.find(u => u.username === username)) return res.send("Ник занят.");
-    users.push({ username, password, xp: 0, mutedUntil: 0, avatar: "https://cdn-icons-png.flaticon.com/512/147/147144.png" });
-    res.send(`<h2>Успех! Аккаунт ${username} создан.</h2><a href="/">Войти</a>`);
+    users.push({ username, password, color: "#667eea", avatar: "https://cdn-icons-png.flaticon.com/512/147/147144.png", xp: 0, mutedUntil: 0 });
+    res.send(`<h2>Аккаунт создан!</h2><a href="/">Войти</a>`);
 });
 
 app.post('/login', (req, res) => {
@@ -49,24 +48,9 @@ io.on('connection', (socket) => {
         const isAdmin = data.user === "@-ADMIN-@";
         const user = isAdmin ? { xp: -1, mutedUntil: 0 } : users.find(u => u.username === data.user);
         if (user && user.mutedUntil > Date.now()) return;
-
-        const msgId = Date.now() + Math.random();
-        const newMsg = { ...data, id: msgId, avatar: data.avatar || "https://cdn-icons-png.flaticon.com/512/147/147144.png", xp: user ? user.xp : 0 };
-        messages.push(newMsg);
-        io.emit('chat message', newMsg);
-    });
-
-    socket.on('delete message', (id) => {
-        messages = messages.filter(m => m.id !== id);
-        io.emit('message deleted', id);
-    });
-
-    socket.on('edit message', (data) => {
-        const msg = messages.find(m => m.id === data.id);
-        if (msg) {
-            msg.text = data.newText + " (изм.)";
-            io.emit('message edited', { id: data.id, newText: msg.text });
-        }
+        
+        const xpVal = user ? user.xp : 0;
+        io.emit('chat message', { ...data, xp: xpVal });
     });
 
     socket.on('admin add xp', (d) => {
@@ -82,4 +66,4 @@ io.on('connection', (socket) => {
     });
 });
 
-server.listen(PORT, () => console.log('Work'));
+server.listen(PORT, () => console.log('Bizbarmak Live'));
