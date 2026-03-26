@@ -3,34 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bizbarmak</title>
+    <title>Bizbarmak | Stickers</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        /* Весь твой старый CSS без изменений */
         * { box-sizing: border-box; }
         body { font-family: 'Poppins', sans-serif; background: #0f0c29; margin: 0; display: flex; height: 100vh; color: white; overflow: hidden; }
-        .sidebar { width: 280px; background: rgba(255,255,255,0.03); border-right: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; }
+        .sidebar { width: 260px; background: rgba(255,255,255,0.03); border-right: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; }
         .profile-section { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: center; }
-        .my-avatar { width: 80px; height: 80px; border-radius: 50%; border: 2px solid #667eea; object-fit: cover; }
+        .my-avatar { width: 70px; height: 70px; border-radius: 50%; border: 2px solid #667eea; }
         .main-chat { flex: 1; display: flex; flex-direction: column; }
-        #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
-        .msg-container { display: flex; align-items: flex-end; gap: 10px; max-width: 85%; }
-        .mine-container { flex-direction: row-reverse; align-self: flex-end; }
-        .message { padding: 12px 16px; border-radius: 18px; font-size: 14px; position: relative; }
-        .mine { background: #667eea; border-bottom-right-radius: 4px; }
-        .others { background: rgba(255,255,255,0.1); border-bottom-left-radius: 4px; }
-        .rank-badge { font-size: 8px; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-left: 8px; vertical-align: middle; }
-        .rank-admin { background: linear-gradient(-45deg, #ff4b2b, #ff416c); color: #fff; animation: grad 2s linear infinite; }
+        #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+        
+        .msg-container { display: flex; align-items: flex-end; gap: 10px; max-width: 80%; }
+        .mine-container { align-self: flex-end; flex-direction: row-reverse; }
+        .message { padding: 12px; border-radius: 15px; font-size: 14px; }
+        .mine { background: #667eea; }
+        .others { background: rgba(255,255,255,0.1); }
+        
+        .rank-badge { font-size: 8px; font-weight: bold; padding: 2px 5px; border-radius: 4px; margin-left: 5px; color: #fff; }
+        .rank-admin { background: linear-gradient(-45deg, #ff4b2b, #ff416c); animation: grad 2s linear infinite; }
+        .rank-chef { background: linear-gradient(-45deg, #f6d365, #fda085); animation: grad 3s ease infinite; }
         @keyframes grad { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-        
-        /* Стили для кнопок управления сообщением */
-        .msg-tools { opacity: 0; transition: 0.2s; display: flex; gap: 5px; margin-bottom: 2px; }
-        .msg-container:hover .msg-tools { opacity: 1; }
-        .tool-btn { background: none; border: none; color: gray; cursor: pointer; font-size: 10px; }
-        .tool-btn:hover { color: white; }
-        
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; }
-        .modal-content { background: #1a1a2e; padding: 25px; border-radius: 20px; width: 320px; text-align: center; }
+
+        /* ПАНЕЛЬ СТИКЕРОВ */
+        #stickerPanel { display: none; position: absolute; bottom: 80px; right: 20px; background: #1a1a2e; border: 1px solid #333; padding: 10px; border-radius: 15px; grid-template-columns: repeat(4, 1fr); gap: 10px; z-index: 100; }
+        .sticker { width: 50px; height: 50px; cursor: pointer; transition: 0.2s; }
+        .sticker:hover { transform: scale(1.1); }
     </style>
 </head>
 <body>
@@ -39,28 +37,25 @@
     <div class="profile-section">
         <img id="myAvatar" class="my-avatar" src="">
         <h3 id="myNameDisplay">...</h3>
-        <p id="myBioDisplay" style="font-size: 10px; opacity: 0.5;"></p>
+        <p id="myBioDisplay" style="font-size:10px; opacity:0.5;"></p>
     </div>
     <div id="onlineList" style="padding:20px; font-size:11px; color:#667eea;"></div>
 </div>
 
 <div class="main-chat">
     <div id="chat-window"></div>
-    <div style="padding:20px; display:flex; gap:10px;">
-        <input type="text" id="msgInput" placeholder="Сообщение..." style="flex:1; padding:15px; border-radius:12px; border:none; background:rgba(255,255,255,0.1); color:white;">
-        <button onclick="send()" style="padding:15px; border-radius:12px; border:none; background:#667eea; color:white; cursor:pointer;">➤</button>
+    
+    <div id="stickerPanel">
+        <img class="sticker" src="https://cdn-icons-png.flaticon.com/512/2274/2274543.png" onclick="sendSticker(this.src)">
+        <img class="sticker" src="https://cdn-icons-png.flaticon.com/512/2274/2274555.png" onclick="sendSticker(this.src)">
+        <img class="sticker" src="https://cdn-icons-png.flaticon.com/512/2274/2274550.png" onclick="sendSticker(this.src)">
+        <img class="sticker" src="https://cdn-icons-png.flaticon.com/512/2584/2584606.png" onclick="sendSticker(this.src)">
     </div>
-</div>
 
-<div id="profileModal" class="modal" onclick="this.style.display='none'">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <img id="vAvatar" src="" style="width:80px; border-radius:50%;">
-        <h2 id="vName"></h2>
-        <div id="vRankBox"></div>
-        <div id="adminPanel" style="display:none; margin-top:10px; padding:10px; background:rgba(255,255,255,0.05); border-radius:10px;">
-            <button onclick="giveXP(100)">+100 XP</button>
-            <button onclick="mute(5)">Мут 5м</button>
-        </div>
+    <div style="padding:15px; display:flex; gap:10px; background:rgba(0,0,0,0.2);">
+        <button onclick="document.getElementById('stickerPanel').style.display = document.getElementById('stickerPanel').style.display === 'grid' ? 'none' : 'grid'" style="background:none; border:none; font-size:20px; cursor:pointer;">😊</button>
+        <input type="text" id="msgInput" placeholder="Сообщение..." style="flex:1; background:rgba(255,255,255,0.05); border:none; border-radius:10px; color:white; padding:10px;">
+        <button onclick="send()" style="background:#667eea; border:none; padding:10px 20px; border-radius:10px; color:white; cursor:pointer;">➤</button>
     </div>
 </div>
 
@@ -68,12 +63,12 @@
 <script>
     const socket = io();
     const myName = new URLSearchParams(window.location.search).get('user') || "Гость";
-    let targetUser = "";
 
     function getRank(xp) {
-        if (xp === -1) return { name: "АДМИН", icon: "⚡", color: "#ff4b2b", class: "rank-admin" };
-        if (xp < 100) return { name: "Голодный", icon: "🥖", color: "#aaa", class: "" };
-        return { name: "Шеф", icon: "👑", color: "#f6d365", class: "rank-chef" };
+        if (xp === -1) return { name: "АДМИН", icon: "⚡", class: "rank-admin" };
+        if (xp < 100) return { name: "Голодный", icon: "🥖", class: "" };
+        if (xp >= 1500) return { name: "ШЕФ", icon: "👑", class: "rank-chef" };
+        return { name: "Гость", icon: "🍽️", class: "" };
     }
 
     socket.emit('register online', myName);
@@ -81,15 +76,20 @@
         const r = getRank(user.xp);
         document.getElementById('myNameDisplay').innerText = user.username;
         document.getElementById('myAvatar').src = user.avatar;
-        document.getElementById('myBioDisplay').innerText = `${r.icon} ${r.name}`;
+        document.getElementById('myBioDisplay').innerText = r.name;
     });
 
     function send() {
         const input = document.getElementById('msgInput');
         if (input.value.trim()) {
-            socket.emit('chat message', { user: myName, text: input.value });
+            socket.emit('chat message', { user: myName, text: input.value, type: 'text' });
             input.value = "";
         }
+    }
+
+    function sendSticker(url) {
+        socket.emit('chat message', { user: myName, text: url, type: 'sticker' });
+        document.getElementById('stickerPanel').style.display = 'none';
     }
 
     socket.on('chat message', d => {
@@ -97,53 +97,21 @@
         const isMe = d.user === myName;
         const r = getRank(d.xp);
         const div = document.createElement('div');
-        div.className = `msg-container ${isMe ? 'mine-container' : 'others-container'}`;
-        div.id = `msg-${d.id}`;
+        div.className = `msg-container ${isMe ? 'mine-container' : ''}`;
+        
+        let content = d.type === 'sticker' ? `<img src="${d.text}" style="width:80px;">` : d.text;
+
         div.innerHTML = `
-            <img src="${d.avatar}" style="width:35px; height:35px; border-radius:50%; cursor:pointer;" onclick="socket.emit('get info', '${d.user}')">
-            <div style="display:flex; flex-direction:column; align-items: ${isMe?'flex-end':'flex-start'};">
-                <div class="msg-tools">
-                    <button class="tool-btn" onclick="editMsg('${d.id}')">✏️</button>
-                    <button class="tool-btn" onclick="deleteMsg('${d.id}')">🗑️</button>
+            <div class="message ${isMe ? 'mine' : 'others'}">
+                <div style="font-size:9px; opacity:0.7; margin-bottom:3px;">
+                    ${d.user} <span class="rank-badge ${r.class}">${r.icon}</span>
                 </div>
-                <div class="message ${isMe ? 'mine' : 'others'}">
-                    <div style="font-size:9px; color:${d.color}; margin-bottom:4px;">${d.user} <span class="rank-badge ${r.class}" style="background:${r.color}">${r.icon}</span></div>
-                    <span id="text-${d.id}">${d.text}</span>
-                </div>
+                ${content}
             </div>
         `;
         win.appendChild(div);
         win.scrollTop = win.scrollHeight;
     });
-
-    // ЛОГИКА ИЗМЕНЕНИЙ В ЧАТЕ
-    socket.on('message deleted', id => { 
-        const el = document.getElementById(`msg-${id}`);
-        if(el) el.innerHTML = `<p style="font-size:10px; color:gray; margin:10px;">Сообщение удалено</p>`;
-    });
-
-    socket.on('message edited', data => {
-        const el = document.getElementById(`text-${data.id}`);
-        if(el) el.innerText = data.newText;
-    });
-
-    function deleteMsg(id) { socket.emit('delete message', id); }
-    function editMsg(id) {
-        const old = document.getElementById(`text-${id}`).innerText;
-        const res = prompt("Изменить на:", old);
-        if(res) socket.emit('edit message', { id, newText: res });
-    }
-
-    socket.on('user info', user => {
-        targetUser = user.username;
-        document.getElementById('vName').innerText = user.username;
-        document.getElementById('vAvatar').src = user.avatar;
-        document.getElementById('adminPanel').style.display = (myName === "@-ADMIN-@") ? "block" : "none";
-        document.getElementById('profileModal').style.display = 'flex';
-    });
-
-    function giveXP(a) { socket.emit('admin add xp', { targetName: targetUser, amount: a }); }
-    function mute(m) { socket.emit('admin mute', { targetName: targetUser, minutes: m }); }
 
     socket.on('update online', list => { document.getElementById('onlineList').innerText = "Онлайн: " + list.join(', '); });
     document.getElementById('msgInput').onkeypress = (e) => { if(e.key==='Enter') send(); };
