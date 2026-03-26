@@ -29,13 +29,14 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 app.post('/register', (req, res) => {
     const { username, password } = req.body;
-    if (username.includes("ADMIN")) return res.send(uiWrapper("Ошибка", "Этот ник защищен системой.", "Назад", "#ff4b2b"));
-    if (users.find(u => u.username === username)) return res.send(uiWrapper("Ошибка", "Никнейм занят.", "Назад", "#ff4b2b"));
+    if (username.includes("ADMIN")) return res.send(uiWrapper("Ошибка", "Ник защищен.", "Назад", "#ff4b2b"));
+    if (users.find(u => u.username === username)) return res.send(uWrapper("Ошибка", "Ник занят.", "Назад", "#ff4b2b"));
     users.push({ 
         username, password, color: "#667eea", 
         bio: "В сети Bizbarmak", 
         avatar: "https://cdn-icons-png.flaticon.com/512/147/147144.png",
-        xp: 0 
+        xp: 0,
+        mutedUntil: 0 // Время окончания мута
     });
     res.send(uiWrapper("Успех!", `Аккаунт ${username} создан.`, "Войти"));
 });
@@ -58,7 +59,7 @@ io.on('connection', (socket) => {
         onlineUsers[username] = socket.id;
         let user;
         if (username === "@-ADMIN-@") {
-            user = { username: "@-ADMIN-@", color: "#ff4b2b", bio: "ГЛАВНЫЙ АДМИНИСТРАТОР", avatar: "https://cdn-icons-png.flaticon.com/512/606/606541.png", xp: -1 };
+            user = { username: "@-ADMIN-@", color: "#ff4b2b", bio: "ГЛАВНЫЙ АДМИН", avatar: "https://cdn-icons-png.flaticon.com/512/606/606541.png", xp: -1 };
         } else {
             user = users.find(u => u.username === username);
         }
@@ -68,19 +69,49 @@ io.on('connection', (socket) => {
 
     socket.on('chat message', (data) => {
         const isAdmin = data.user === "@-ADMIN-@";
-        const user = isAdmin ? { color: "#ff4b2b", avatar: "https://cdn-icons-png.flaticon.com/512/606/606541.png", xp: -1 } : users.find(u => u.username === data.user);
+        const user = isAdmin ? { color: "#ff4b2b", avatar: "https://cdn-icons-png.flaticon.com/512/606/606541.png", xp: -1, mutedUntil: 0 } : users.find(u => u.username === data.user);
+        
         if (user) {
+            // Проверка мута
+            if (user.mutedUntil > Date.now()) {
+                const remaining = Math.ceil((user.mutedUntil - Date.now()) / 1000);
+                return socket.emit('chat message', { user: "Система", text: `Вы замучены! Осталось: ${remaining} сек.`, color: "#ff4b2b", xp: -2 });
+            }
+
             if (!isAdmin) user.xp += 10;
             io.emit('chat message', { ...data, color: user.color, avatar: user.avatar, xp: user.xp });
         }
     });
 
-    socket.on('admin set xp', (data) => {
+    // ТЕПЕРЬ ДОБАВЛЯЕТ XP (+), А НЕ ЗАМЕНЯЕТ
+    socket.on('admin add xp', (data) => {
         if (currentUserName === "@-ADMIN-@") {
             const target = users.find(u => u.username === data.targetName);
             if (target) {
-                target.xp = parseInt(data.amount);
-                io.emit('chat message', { user: "Система", text: `XP игрока ${data.targetName} изменено на ${data.amount}!`, color: "#ff4b2b", avatar: "https://cdn-icons-png.flaticon.com/512/606/606541.png", xp: -2 });
+                target.xp += parseInt(data.amount);
+                io.emit('chat message', { user: "Система", text: `Админ выдал +${data.amount} XP игроку ${data.targetName}!`, color: "#ff4b2b", avatar: "https://cdn-icons-png.flaticon.com/512/606/606541.png", xp: -2 });
+            }
+        }
+    });
+
+    // ВЫДАЧА ШЕФА (УСТАНОВКА 1500)
+    socket.on('admin set chef', (targetName) => {
+        if (currentUserName === "@-ADMIN-@") {
+            const target = users.find(u => u.username === targetName);
+            if (target) {
+                target.xp = 1500;
+                io.emit('chat message', { user: "Система", text: `${targetName} теперь Шеф по воле Админа!`, color: "#f6d365", avatar: "https://cdn-icons-png.flaticon.com/512/606/606541.png", xp: -2 });
+            }
+        }
+    });
+
+    // МУТ
+    socket.on('admin mute', (data) => {
+        if (currentUserName === "@-ADMIN-@") {
+            const target = users.find(u => u.username === data.targetName);
+            if (target) {
+                target.mutedUntil = Date.now() + (data.minutes * 60 * 1000);
+                io.emit('chat message', { user: "Система", text: `Игрок ${data.targetName} замучен на ${data.minutes} мин.`, color: "#ff4b2b", xp: -2 });
             }
         }
     });
@@ -90,13 +121,13 @@ io.on('connection', (socket) => {
             const target = users.find(u => u.username === targetName);
             if (target) {
                 target.xp = 0;
-                io.emit('chat message', { user: "Система", text: `Опыт игрока ${targetName} был полностью обнулен!`, color: "#ff4b2b", avatar: "https://cdn-icons-png.flaticon.com/512/606/606541.png", xp: -2 });
+                io.emit('chat message', { user: "Система", text: `Опыт игрока ${targetName} обнулен!`, color: "#ff4b2b", xp: -2 });
             }
         }
     });
 
     socket.on('get info', (name) => {
-        const target = (name === "@-ADMIN-@") ? { username: "@-ADMIN-@", color: "#ff4b2b", bio: "ГЛАВНЫЙ АДМИНИСТРАТОР", avatar: "https://cdn-icons-png.flaticon.com/512/606/606541.png", xp: -1 } : users.find(u => u.username === name);
+        const target = (name === "@-ADMIN-@") ? { username: "@-ADMIN-@", color: "#ff4b2b", bio: "ГЛАВНЫЙ АДМИН", avatar: "https://cdn-icons-png.flaticon.com/512/606/606541.png", xp: -1 } : users.find(u => u.username === name);
         if (target) socket.emit('user info', target);
     });
 
@@ -106,4 +137,4 @@ io.on('connection', (socket) => {
     });
 });
 
-server.listen(PORT, () => console.log('Bizbarmak Admin Ready!'));
+server.listen(PORT, () => console.log('Admin v2 Ready'));
