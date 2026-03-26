@@ -29,18 +29,26 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 app.post('/register', (req, res) => {
     const { username, password } = req.body;
+    if (username === "@-ADMIN-@") return res.send(uiWrapper("Ошибка", "Этот ник зарезервирован.", "Назад", "#ff4b2b"));
     if (users.find(u => u.username === username)) return res.send(uiWrapper("Ошибка", "Никнейм занят.", "Назад", "#ff4b2b"));
     users.push({ 
         username, password, color: "#667eea", 
         bio: "В сети Bizbarmak", 
         avatar: "https://cdn-icons-png.flaticon.com/512/147/147144.png",
-        xp: 0 
+        xp: 0,
+        role: "user"
     });
     res.send(uiWrapper("Успех!", `Аккаунт ${username} создан.`, "Войти"));
 });
 
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
+    
+    // ПРОВЕРКА АДМИН-ПАНЕЛИ
+    if (username === "@-ADMIN-@" && password === "adminpanelactivate") {
+        return res.redirect(`/chat.html?user=${encodeURIComponent(username)}&admin=true`);
+    }
+
     const user = users.find(u => u.username === username && u.password === password);
     if (user) res.redirect(`/chat.html?user=${encodeURIComponent(username)}`);
     else res.send(uiWrapper("Ошибка", "Неверный логин или пароль.", "Назад", "#ff4b2b"));
@@ -49,38 +57,34 @@ app.post('/login', (req, res) => {
 io.on('connection', (socket) => {
     socket.on('register online', (username) => {
         onlineUsers[username] = socket.id;
-        const user = users.find(u => u.username === username);
+        let user;
+        if (username === "@-ADMIN-@") {
+            user = { username: "@-ADMIN-@", color: "#ff4b2b", bio: "ГЛАВНЫЙ ШЕФ", avatar: "https://cdn-icons-png.flaticon.com/512/606/606541.png", xp: 999999, role: "admin" };
+        } else {
+            user = users.find(u => u.username === username);
+        }
         if (user) socket.emit('profile data', user);
         io.emit('update online', Object.keys(onlineUsers));
     });
 
-    socket.on('update profile', (data) => {
-        const user = users.find(u => u.username === data.username);
-        if (user) { user.color = data.color; user.bio = data.bio; user.avatar = data.avatar; }
-    });
-
     socket.on('chat message', (data) => {
-        const user = users.find(u => u.username === data.user);
+        const user = (data.user === "@-ADMIN-@") ? { color: "#ff4b2b", avatar: "https://cdn-icons-png.flaticon.com/512/606/606541.png", xp: 999999 } : users.find(u => u.username === data.user);
         if (user) {
-            user.xp += 10;
+            if (data.user !== "@-ADMIN-@") user.xp += 10;
             io.emit('chat message', { ...data, color: user.color, avatar: user.avatar, xp: user.xp });
         }
     });
 
-    socket.on('private message', ({ to, from, text }) => {
-        const targetId = onlineUsers[to];
-        const sender = users.find(u => u.username === from);
-        if (targetId && sender) {
-            sender.xp += 5;
-            const payload = { from, text, color: sender.color, avatar: sender.avatar, xp: sender.xp };
-            io.to(targetId).emit('private message', payload);
-            socket.emit('private message', { ...payload, from: `Вы (для ${to})` });
+    // АДМИН-КОМАНДА: Обнулить XP
+    socket.on('admin reset xp', (targetName) => {
+        const admin = Object.keys(onlineUsers).find(key => onlineUsers[key] === socket.id);
+        if (admin === "@-ADMIN-@") {
+            const target = users.find(u => u.username === targetName);
+            if (target) {
+                target.xp = 0;
+                io.emit('chat message', { user: "Система", text: `XP пользователя ${targetName} было обнулено админом!`, color: "#ff4b2b" });
+            }
         }
-    });
-
-    socket.on('get info', (name) => {
-        const target = users.find(u => u.username === name);
-        if (target) socket.emit('user info', target);
     });
 
     socket.on('disconnect', () => {
@@ -89,4 +93,4 @@ io.on('connection', (socket) => {
     });
 });
 
-server.listen(PORT, () => console.log('Bizbarmak Live!'));
+server.listen(PORT, () => console.log('Bizbarmak Admin System Active'));
