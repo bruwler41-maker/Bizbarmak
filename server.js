@@ -72,16 +72,22 @@ io.on('connection', (socket) => {
         const user = isAdmin ? { color: "#ff4b2b", avatar: "https://cdn-icons-png.flaticon.com/512/606/606541.png", xp: -1, mutedUntil: 0 } : users.find(u => u.username === data.user);
         
         if (user) {
-            // Проверка мута
-            if (user.mutedUntil > Date.now()) {
-                const remaining = Math.ceil((user.mutedUntil - Date.now()) / 1000);
-                return socket.emit('chat message', { user: "Система", text: `Вы замучены! Осталось: ${remaining} сек.`, color: "#ff4b2b", xp: -2 });
-            }
+            if (user.mutedUntil > Date.now()) return; // Проверка мута
 
             if (!isAdmin) user.xp += 10;
-            io.emit('chat message', { ...data, color: user.color, avatar: user.avatar, xp: user.xp });
+            // Добавляем поле type: если его нет в data, ставим 'text'
+            io.emit('chat message', { 
+                ...data, 
+                type: data.type || 'text', 
+                color: user.color, 
+                avatar: user.avatar, 
+                xp: user.xp 
+            });
         }
     });
+        if (user) {
+            // Проверка мута
+
 
     // ТЕПЕРЬ ДОБАВЛЯЕТ XP (+), А НЕ ЗАМЕНЯЕТ
     socket.on('admin add xp', (data) => {
